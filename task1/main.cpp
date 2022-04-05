@@ -11,6 +11,8 @@ using namespace glm;
 
 #include <common/shader.hpp>
 
+GLFWwindow *window;
+
 GLuint CreateVBO(const GLfloat *g_vertex_buffer_data, uint64_t size_bytes)
 {
 	GLuint vertexbuffer;
@@ -19,6 +21,43 @@ GLuint CreateVBO(const GLfloat *g_vertex_buffer_data, uint64_t size_bytes)
 	glBufferData(GL_ARRAY_BUFFER, size_bytes, g_vertex_buffer_data, GL_STATIC_DRAW);
 
 	return vertexbuffer;
+}
+
+glm::mat4 ViewMatrix;
+
+glm::mat4 getViewMatrix()
+{
+	return ViewMatrix;
+}
+
+// Initial position : on +Z
+glm::vec3 position = glm::vec3(0, 2, 5);
+
+float angle = 3.14f / 2;
+float speed = 0.5f;
+float radius = 5.0f;
+float speed_rad = 3.14f * speed / radius;
+
+void computeMatricesFromInputs()
+{
+
+	// glfwGetTime is called only once, the first time this function is called
+	static double lastTime = glfwGetTime();
+
+	// Compute time difference between current and last frame
+	double currentTime = glfwGetTime();
+	float deltaTime = float(currentTime - lastTime);
+
+	angle += deltaTime * speed_rad;
+	position = glm::vec3(5 * cos(angle), 0, 5 * sin(angle));
+
+	ViewMatrix = glm::lookAt(
+			position,
+			glm::vec3(0, 0, 0),
+			glm::vec3(0, 1, 0));
+
+	// For the next frame, the "last time" will be "now"
+	lastTime = currentTime;
 }
 
 int main(void)
@@ -36,7 +75,6 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow *window;
 	window = glfwCreateWindow(1024, 768, "Playground", NULL, NULL);
 	if (window == NULL)
 	{
@@ -86,21 +124,33 @@ int main(void)
 	GLuint MatrixID2 = glGetUniformLocation(program_green, "MVP");
 
 	glm::mat4 Projection = glm::perspective(glm::radians(60.0f), 4.0f / 3.0f, 0.1f, 100.0f);
-
-	glm::mat4 View = glm::lookAt(
-			glm::vec3(-2, 0, 2.5),
-			glm::vec3(0, 0, 0),
-			glm::vec3(0, 1, 0));
 	glm::mat4 Model = glm::mat4(1.0f);
-	glm::mat4 MVP = Projection * View * Model;
 
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	double lastTime = glfwGetTime();
+	int frames = 0;
+
 	do
 	{
+		double currentTime = glfwGetTime();
+		++frames;
+
+		if (currentTime - lastTime >= 1)
+		{
+			printf("%d FPS\n", frames);
+			frames = 0;
+			lastTime += 1.0;
+		}
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		computeMatricesFromInputs();
+		glm::mat4 View = getViewMatrix();
+
+		glm::mat4 MVP = Projection * View * Model;
 
 		glUseProgram(program_red);
 
