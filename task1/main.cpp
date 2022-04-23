@@ -99,6 +99,10 @@ int main(void)
 	glClearColor(0.4f, 0.0f, 0.2f, 0.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+	
+	GLuint VertexArrayID;
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
 
 	GLuint program_red = LoadShaders("AwesomeVertexShader.vertexshader", "AwesomeFragmentShader.fragmentshader");
 	GLuint program_green = LoadShaders("AmazingVertexShader.vertexshader", "AmazingFragmentShader.fragmentshader");
@@ -189,6 +193,7 @@ int main(void)
 
 	glDeleteBuffers(1, &vertexbuffer_1);
 	glDeleteBuffers(1, &vertexbuffer_2);
+	glDeleteVertexArrays(1, &VertexArrayID);
 	glDeleteProgram(program_red);
 	glDeleteProgram(program_green);
 
